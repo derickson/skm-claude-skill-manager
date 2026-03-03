@@ -192,6 +192,41 @@ skm push command my-command.md --force --no-commit
 
 ---
 
+### `skm remove <type> <name> [--force]`
+
+Removes a command or skill from the current project. Does **not** affect the library.
+
+**Arguments:**
+
+| Argument | Description |
+|---|---|
+| `type` | `command` or `skill` |
+| `name` | Filename of the command or directory name of the skill |
+
+**Flags:**
+
+| Flag | Description |
+|---|---|
+| `--force`, `-f` | Skip the confirmation prompt |
+
+If the item does not exist in the project, `skm` exits with an error and lists what is available.
+
+Without `--force`, you are prompted:
+
+```
+Remove <type> '<name>' from this project? [y/N]
+```
+
+**Examples:**
+
+```bash
+skm remove command git-auto-commit.md
+skm remove skill python-http-server
+skm remove command old-command.md --force   # skip prompt
+```
+
+---
+
 ## Config file
 
 `~/.config/skm/config.json` is written by `skm install` and read by all other subcommands and by the in-Claude SKM skill.

@@ -242,6 +242,41 @@ def cmd_push(args):
             _git_commit(_library_root(config), name)
 
 
+# ---------------------------------------------------------------------------
+# skm remove  — delete a command or skill from this project
+# ---------------------------------------------------------------------------
+
+def cmd_remove(args):
+    item_type = args.type
+    name = args.name
+    dirs_only = item_type == "skill"
+
+    project_dir = _project_dir(item_type)
+    target = project_dir / name
+
+    if not target.exists():
+        available = _list_names(project_dir, dirs_only=dirs_only)
+        msg = f"{item_type} '{name}' not found in this project at {target}."
+        if available:
+            msg += f"\n  Available: {', '.join(available)}"
+        else:
+            msg += f"\n  Project {item_type} directory is empty or missing."
+        _die(msg)
+
+    if not args.force:
+        answer = input(f"Remove {item_type} '{name}' from this project? [y/N] ").strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            sys.exit(0)
+
+    if target.is_dir():
+        shutil.rmtree(target)
+    else:
+        target.unlink()
+
+    print(f"Removed {item_type} '{name}' from {project_dir}")
+
+
 def _git_commit(lib: Path, name: str) -> None:
     project_name = Path.cwd().name
     msg = f"SKM: add/update {name} from {project_name}"
@@ -324,6 +359,17 @@ def main():
         help="Skip git commit without prompting.",
     )
     p.set_defaults(func=cmd_push)
+
+    # --- remove ---
+    p = subparsers.add_parser("remove", help="Remove a command or skill from this project.")
+    p.add_argument("type", choices=ITEM_TYPES)
+    p.add_argument("name", help="Name of the command file or skill directory.")
+    p.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Skip confirmation prompt (use after obtaining consent via AskUserQuestion).",
+    )
+    p.set_defaults(func=cmd_remove)
 
     args = parser.parse_args()
     args.func(args)

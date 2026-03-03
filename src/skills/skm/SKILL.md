@@ -33,6 +33,7 @@ Use AskUserQuestion:
 **Options:**
 - **SKM Install** — Copy a skill or command from the library into this project
 - **SKM Save** — Copy a skill or command from this project to the library
+- **SKM Remove** — Delete a skill or command from this project
 - **Cancel** — Do nothing
 
 ## Step 3: Handle each action
@@ -90,6 +91,31 @@ Use AskUserQuestion:
    **"SKM: Commit this change to the library git repo?"**
    - **Yes** → run `skm push <type> <name> --force --commit`
    - **No** → run `skm push <type> <name> --force --no-commit`
+
+4. Show the output. If the exit code is non-zero, show the error and stop.
+
+---
+
+### SKM Remove
+
+**Goal:** delete a command or skill from this project (does not affect the library).
+
+1. List what is installed in this project:
+   ```bash
+   ls .claude/commands/ 2>/dev/null || echo "(none)"
+   ls .claude/skills/ 2>/dev/null || echo "(none)"
+   ```
+   Show the results. Use AskUserQuestion to ask which item to remove and whether it is a `command` or `skill`.
+
+2. Use AskUserQuestion to confirm:
+   **"SKM: Permanently remove `<name>` from this project? This does not affect the library."**
+   - **Yes** → proceed
+   - **No** → stop
+
+3. Run:
+   ```bash
+   skm remove <type> <name> --force
+   ```
 
 4. Show the output. If the exit code is non-zero, show the error and stop.
 
