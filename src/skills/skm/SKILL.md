@@ -5,77 +5,98 @@ description: "SKM — Skill/command library manager. Trigger phrases: \"SKM\", \
 
 You are SKM (Skill Manager). Help the user manage Claude Code skills and commands between their projects and the central SKM library.
 
-## Step 1: Load config
+All file operations are performed by the `skm` CLI. Do not use raw `cp`, `mkdir`, or `ls` for library/project operations — delegate to `skm` so that validation and error handling are consistent.
 
-Read `~/.config/skm/config.json` using the Read tool. Extract `repo_path` as `LIBRARY_PATH`.
+## Step 1: Verify SKM is available
 
-If the file does not exist or cannot be read, tell the user:
-> "SKM is not configured. Please run `skm install <this-project-path>` from the terminal first."
-Then stop.
+Run:
+```bash
+skm list
+```
+
+- If `skm: command not found`, tell the user:
+  > "The `skm` CLI is not installed. Run `make install` in the SKM library repo, then ensure `~/.local/bin` is on your PATH."
+  Then stop.
+
+- If the output contains `Error: SKM is not configured`, tell the user:
+  > "SKM is not configured for this machine. Run `skm install .` in a terminal from this project directory."
+  Then stop.
+
+- If the command succeeds, show the output (library path + commands + skills) to the user.
 
 ## Step 2: Present main menu
 
-Use AskUserQuestion to show the main menu:
+Use AskUserQuestion:
 
 **Question:** "SKM — What would you like to do?"
 
 **Options:**
-- **SKM List** — Show all skills and commands in the library
 - **SKM Install** — Copy a skill or command from the library into this project
 - **SKM Save** — Copy a skill or command from this project to the library
 - **Cancel** — Do nothing
 
 ## Step 3: Handle each action
 
-### SKM List
-Run these two Bash commands:
-```bash
-ls "$LIBRARY_PATH/.claude/commands/" 2>/dev/null || echo "(none)"
-ls "$LIBRARY_PATH/.claude/skills/" 2>/dev/null || echo "(none)"
-```
-Display the results clearly, grouped by type (Commands / Skills).
+---
 
 ### SKM Install
 
-1. List available items from the library:
-   - Commands: `ls "$LIBRARY_PATH/.claude/commands/"`
-   - Skills: `ls "$LIBRARY_PATH/.claude/skills/"`
+**Goal:** copy an item from the library into this project.
 
-2. Use AskUserQuestion to ask which item to install and whether it's a command or skill.
+1. The library listing was already shown in Step 1. Use AskUserQuestion to ask the user which item to install and whether it is a `command` or `skill`.
 
-3. Check if the item already exists in the current project:
-   - Commands: `.claude/commands/<name>`
-   - Skills: `.claude/skills/<name>/`
+2. Check whether the item already exists in this project:
+   ```bash
+   skm pull <type> <name> --force 2>&1; echo "EXIT:$?"
+   ```
+   Wait — do not run this yet. First check for existence:
+   ```bash
+   ls .claude/<commands|skills>/<name> 2>/dev/null && echo "EXISTS" || echo "MISSING"
+   ```
 
-4. If it exists, warn the user with AskUserQuestion: "SKM: This will overwrite the existing `<name>`. Proceed?"
+3. If it exists, use AskUserQuestion:
+   **"SKM: `<name>` already exists in this project. Overwrite?"**
+   - **Yes** → proceed to step 4
+   - **No** → stop
 
-5. Copy using Bash:
-   - Command: `cp "$LIBRARY_PATH/.claude/commands/<name>" ".claude/commands/<name>"`
-   - Skill: `mkdir -p ".claude/skills/<name>" && cp -r "$LIBRARY_PATH/.claude/skills/<name>/." ".claude/skills/<name>/"`
+4. Run:
+   ```bash
+   skm pull <type> <name> --force
+   ```
+   The `--force` flag tells the CLI that confirmation was already obtained above.
 
-6. Confirm success.
+5. Show the output. If the exit code is non-zero, show the error and stop.
+
+---
 
 ### SKM Save
 
-1. List items in the current project:
-   - Commands: `ls .claude/commands/ 2>/dev/null || echo "(none)"`
-   - Skills: `ls .claude/skills/ 2>/dev/null || echo "(none)"`
+**Goal:** copy an item from this project into the library.
 
-2. Use AskUserQuestion to ask which item to save and whether it's a command or skill.
+1. List what is available in this project:
+   ```bash
+   skm list 2>&1
+   ls .claude/commands/ 2>/dev/null || echo "(none)"
+   ls .claude/skills/ 2>/dev/null || echo "(none)"
+   ```
+   Show the project contents to the user. Use AskUserQuestion to ask which item to save and whether it is a `command` or `skill`.
 
-3. Check if the item already exists in the library. If so, warn with AskUserQuestion: "SKM: This will overwrite `<name>` in the library. Proceed?"
+2. Check whether the item already exists in the library (visible in the `skm list` output from Step 1). If it does, use AskUserQuestion:
+   **"SKM: `<name>` already exists in the library. Overwrite?"**
+   - **Yes** → proceed to step 3
+   - **No** → stop
 
-4. Copy using Bash:
-   - Command: `cp ".claude/commands/<name>" "$LIBRARY_PATH/.claude/commands/<name>"`
-   - Skill: `mkdir -p "$LIBRARY_PATH/.claude/skills/<name>" && cp -r ".claude/skills/<name>/." "$LIBRARY_PATH/.claude/skills/<name>/"`
+3. Use AskUserQuestion:
+   **"SKM: Commit this change to the library git repo?"**
+   - **Yes** → run `skm push <type> <name> --force --commit`
+   - **No** → run `skm push <type> <name> --force --no-commit`
 
-5. Use AskUserQuestion to ask: "SKM: Commit this change to the library git repo?"
-   - If yes: run `cd "$LIBRARY_PATH" && git add .claude/ && git commit -m "SKM: add/update <name> from $(basename $PWD)"`
-   - If no: skip.
+4. Show the output. If the exit code is non-zero, show the error and stop.
 
-6. Confirm success.
+---
 
 ## Notes
-- Use the current working directory (where Claude Code is running) as the project path for all relative paths.
-- Always confirm operations before executing them.
-- The `LIBRARY_PATH` from config is the absolute path to the SKM library repo.
+- Always show `skm` output to the user — it contains diagnostic information.
+- The `--force` flag is only used after explicit user confirmation via AskUserQuestion.
+- `--commit` and `--no-commit` are mutually exclusive; always pass one when using `--force` on `push`.
+- If `skm` reports that a source item is not found, show the "Available:" hint from the error output.
