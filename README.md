@@ -5,14 +5,17 @@ A central library and CLI tool for managing [Claude Code](https://docs.anthropic
 ## What's in this repo
 
 ```
-.claude/
-  commands/          # Reusable slash commands (copied verbatim to projects)
+src/
   skills/
     claude-skill-manager/
-      SKILL.md       # The in-Claude interactive skill manager
+      SKILL.md       # The in-Claude interactive skill manager (installed into projects)
+.claude/
+  commands/          # Library of distributable slash commands
 skill_manager.py     # CLI tool
 Makefile             # install / uninstall
 ```
+
+`src/` holds the skill manager itself — it is installed into other projects by the CLI, not managed as library content. `.claude/commands/` and `.claude/skills/` (when present) are the distributable library that the skill manager operates on.
 
 ## Setup
 
@@ -47,7 +50,7 @@ skill-manager install .
 This does two things:
 
 1. Writes `~/.config/skill-manager/config.json` pointing back to this repo — the bridge between the CLI and the in-Claude skill.
-2. Copies `.claude/skills/claude-skill-manager/` into the target project.
+2. Copies `src/skills/claude-skill-manager/` into the target project's `.claude/skills/`.
 
 Re-run this command any time you move the repo.
 
@@ -76,4 +79,4 @@ The skill reads `~/.config/skill-manager/config.json` to find the library, then 
 
 ## Adding your own skills/commands
 
-Use the "Save" action in the in-Claude skill manager, or manually copy files into `.claude/commands/` or `.claude/skills/<name>/` and commit.
+Use the "Save" action in the in-Claude skill manager, or manually copy files into `.claude/commands/` (for commands) or `.claude/skills/<name>/` (for skills) and commit.

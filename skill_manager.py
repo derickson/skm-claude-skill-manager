@@ -21,7 +21,7 @@ def write_config():
 
 
 def install_skill(target: Path):
-    src = REPO_DIR / ".claude" / "skills" / SKILL_NAME
+    src = REPO_DIR / "src" / "skills" / SKILL_NAME
     dst = target / ".claude" / "skills" / SKILL_NAME
 
     if not src.exists():
