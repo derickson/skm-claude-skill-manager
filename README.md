@@ -25,8 +25,8 @@ Makefile             # skm install / uninstall
 ### 1. Clone and install the CLI
 
 ```bash
-git clone <this-repo> ~/dev/claude-skill-manager
-cd ~/dev/claude-skill-manager
+git clone <this-repo> ~/dev/skm-claude-skill-manager
+cd ~/dev/skm-claude-skill-manager
 make install
 ```
 
