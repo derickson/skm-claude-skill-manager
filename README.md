@@ -93,6 +93,9 @@ SKM reads `~/.config/skm/config.json` to find the library, then presents an inte
 
 | Skill | Description |
 |---|---|
+| `build-with-agent-team` | Orchestrate multi-agent teams using Claude Code Agent Teams with tmux split panes |
+| `dave-project-tips` | Conventions and patterns for projects hosted on Dave's server (FastAPI, Vite, Docker, nginx, Elasticsearch) |
+| `nanobanana-generate` | Generate images using Google's nano-banana-2 model on Replicate API |
 | `python-http-server` | Start, list, and stop Python simple HTTP servers |
 
 ## Further reading
